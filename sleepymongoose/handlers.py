@@ -188,6 +188,37 @@ class MongoHandler:
 
         out('{"ok": 1}')
 
+
+    def _authenticate(self, args, out, name = None, db = None, collection = None):
+        """
+        authenticate to the database.
+        """
+
+        if type(args).__name__ == 'dict':
+            out('{"ok" : 0, "errmsg" : "_find must be a POST request"}')
+            return
+
+        conn = self._get_connection(name)
+        if conn == None:
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            return
+
+        if db == None:
+            out('{"ok" : 0, "errmsg" : "db must be defined"}')
+            return
+
+        if not 'username' in args:
+            out('{"ok" : 0, "errmsg" : "username must be defined"}')
+
+        if not 'password' in args:
+            out('{"ok" : 0, "errmsg" : "password must be defined"}')
+        
+        if not conn[db].authenticate(args.getvalue('username'), args.getvalue('password')):
+            out('{"ok" : 0, "errmsg" : "authentication failed"}')
+        else:
+            out('{"ok" : 1}')
+
+
     def _count(self, args, out, name=None, db=None, collection=None):
         """
         query the database.
@@ -230,34 +261,6 @@ class MongoHandler:
 
         out(json.dumps({"count": count}, default=json_util.default))
 
-    def _authenticate(self, args, out, name = None, db = None, collection = None):
-        """
-        authenticate to the database.
-        """
-
-        if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_find must be a POST request"}')
-            return
-
-        conn = self._get_connection(name)
-        if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
-            return
-
-        if db == None:
-            out('{"ok" : 0, "errmsg" : "db must be defined"}')
-            return
-
-        if not 'username' in args:
-            out('{"ok" : 0, "errmsg" : "username must be defined"}')
-
-        if not 'password' in args:
-            out('{"ok" : 0, "errmsg" : "password must be defined"}')
-        
-        if not conn[db].authenticate(args.getvalue('username'), args.getvalue('password')):
-            out('{"ok" : 0, "errmsg" : "authentication failed"}')
-        else:
-            out('{"ok" : 1}')
 
     def _aggregate(self, args, out, name = None, db = None, collection = None):
         if type(args).__name__ != 'dict':
