@@ -616,17 +616,17 @@ class MongoHandler:
 
         options = {}
         if "options" in args:
-            options = self._get_son(args['options'], out)
+            options = self._get_son(args.getvalue('options'), out)
 
         cache_for = 10
         if "cache_for" in args:
-            cache_for = args['cache_for']
+            cache_for = args.getvalue('cache_for')
 
         try:
             name = conn[db][collection].ensure_index(keys.items(), cache_for=cache_for,  **options)
             out('{"ok": 1, "name": "%s"}' % name)
         except Exception, e:
-            out('{"ok": 0, "err": "%s"}' % esc(e.message))
+            out('{"ok": 0, "err": "%s"}' % (e.message)
 
 
 class MongoFakeStream:
