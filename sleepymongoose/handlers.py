@@ -174,6 +174,20 @@ class MongoHandler:
         else:
             out('{"ok" : 0, "errmsg" : "could not connect", "server" : "%s", "name" : "%s"}' % (uri, name))
 
+    def _disconnect(self, args, out, name=None, db=None, collection=None):
+        """
+        disconnect from the database
+        """
+        conn = self._get_connection(name)
+        if conn is None:
+            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}')
+            return
+
+        conn.disconnect()
+        del self.connections[name]
+
+        out('{"ok": 1}')
+
     def _count(self, args, out, name=None, db=None, collection=None):
         """
         query the database.
