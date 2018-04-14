@@ -244,7 +244,30 @@ class MongoHandler:
             out('{"ok" : 0, "errmsg" : "authentication failed"}')
         else:
             out('{"ok" : 1}')
-        
+
+    def _aggregate(self, args, out, name = None, db = None, collection = None):
+        if type(args).__name__ != 'dict':
+            out('{"ok" : 0, "errmsg" : "_aggregate must be a GET request"}')
+            return
+
+        conn = self._get_connection(name)
+        if conn == None:
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            return
+
+        if db == None or collection == None:
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            return
+
+        pipeline = {}
+        if "pipeline" in args:
+            pipeline = self._get_son(args['pipeline'][0], out)
+            if pipeline == None:
+                return
+
+        result = conn[db][collection].aggregate(pipeline)
+        out(json.dumps(result, default=json_util.default))
+
     def _find(self, args, out, name = None, db = None, collection = None):
         """
         query the database.
