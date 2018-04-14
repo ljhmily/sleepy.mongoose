@@ -609,14 +609,14 @@ class MongoHandler:
 
         keys = None
         if "keys" in args:
-            keys = self._get_json(args.getvalue('keys'), out)
+            keys = self._get_son(args.getvalue('keys'), out)
         if keys is None:
             out('{"ok": 0, "err": "missing keys"}')
             return
 
         options = {}
         if "options" in args:
-            options = self._get_json(args['options'], out)
+            options = self._get_son(args['options'], out)
 
         cache_for = 10
         if "cache_for" in args:
