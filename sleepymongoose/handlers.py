@@ -42,14 +42,14 @@ class MongoHandler:
                 name = name.replace(":", "")
 
             self._connect(args, out.ostream, name = name)
-        
+
     def _get_connection(self, name = None, uri='mongodb://localhost:27017'):
         if name == None:
             name = "default"
 
         if name in self.connections:
             return self.connections[name]
-        
+
         try:
             connection = Connection(uri, network_timeout = 2)
         except (ConnectionFailure, ConfigurationError):
@@ -609,7 +609,7 @@ class MongoHandler:
 
         keys = None
         if "keys" in args:
-            keys = self._get_json(args['keys'], out)
+            keys = self._get_json(args.getvalue('keys'), out)
         if keys is None:
             out('{"ok": 0, "err": "missing keys"}')
             return
