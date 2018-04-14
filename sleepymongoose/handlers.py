@@ -593,7 +593,42 @@ class MongoHandler:
 
         out("]")
 
-        
+
+    def _ensure_index(self, args, out, name=None, db=None, collection=None):
+        """
+        Ensure if the collection has index, if not it will be created, if yes, the result will be cached
+        """
+        conn = self._get_connection(name)
+        if conn is None:
+            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}')
+            return
+
+        if db is None or collection is None:
+            out('{"ok": 0, "err": "db and collection must be defined"}')
+            return
+
+        keys = None
+        if "keys" in args:
+            keys = self._get_json(args['keys'], out)
+        if keys is None:
+            out('{"ok": 0, "err": "missing keys"}')
+            return
+
+        options = {}
+        if "options" in args:
+            options = self._get_json(args['options'], out)
+
+        cache_for = 10
+        if "cache_for" in args:
+            cache_for = args['cache_for']
+
+        try:
+            name = conn[db][collection].ensure_index(keys.items(), cache_for=cache_for,  **options)
+            out('{"ok": 1, "name": "%s"}' % name)
+        except Exception, e:
+            out('{"ok": 0, "err": "%s"}' % esc(e.message))
+
+
 class MongoFakeStream:
     def __init__(self):
         self.str = ""
