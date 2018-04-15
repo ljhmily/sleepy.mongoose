@@ -407,7 +407,7 @@ class MongoHandler:
             while len(batch) < batch_size:
                 batch.append(cursor.next())
         except AutoReconnect:
-            out(json.dumps('{"ok" : 0, "errmsg" : "auto reconnecting, please try again"\n'}))
+            out(json.dumps('{"ok" : 0, "errmsg" : "auto reconnecting, please try again"}\n'))
             return
         except OperationFailure, of:
             out(json.dumps('{"ok" : 0, "errmsg" : "%s" % of}\n'))
