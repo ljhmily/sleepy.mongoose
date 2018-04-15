@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from bson.son import SON
+from bson import json_util
 from pymongo import Connection, ASCENDING, DESCENDING
 from pymongo.errors import ConnectionFailure, ConfigurationError, OperationFailure, AutoReconnect
-from bson import json_util
 
 import re
 try:
@@ -38,7 +38,7 @@ class MongoHandler:
             if len(mongos) == 1:
                 name = "default"
             else:
-                name = host.replace(".", "") 
+                name = host.replace(".", "")
                 name = name.replace(":", "")
 
             self._connect(args, out.ostream, name = name)
@@ -92,6 +92,7 @@ class MongoHandler:
         try:
             obj = json.loads(str, object_hook=json_util.object_hook)
         except (ValueError, TypeError):
+            print "Error: Couldn't parse JSON:", str
             out('{"ok" : 0, "errmsg" : "couldn\'t parse json: %s"}' % str)
             return None
 
@@ -134,7 +135,7 @@ class MongoHandler:
     def _hello(self, args, out, name = None, db = None, collection = None):
         out('{"ok" : 1, "msg" : "Uh, we had a slight weapons malfunction, but ' + 
             'uh... everything\'s perfectly all right now. We\'re fine. We\'re ' +
-            'all fine here now, thank you. How are you?"}')
+            'all fine here now, thank you. How are you?"}\n')
         return
         
     def _status(self, args, out, name = None, db = None, collection = None):
@@ -151,7 +152,7 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_connect must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_connect must be a POST request"}\n')
             return
 
         if "server" in args:
@@ -160,7 +161,7 @@ class MongoHandler:
             except Exception, e:
                 print uri
                 print e
-                out('{"ok" : 0, "errmsg" : "invalid server uri given", "server" : "%s"}' % uri)
+                out('{"ok" : 0, "errmsg" : "invalid server uri given", "server" : "%s"}\n' % uri)
                 return
         else:
             uri = 'mongodb://localhost:27017'
@@ -170,23 +171,27 @@ class MongoHandler:
 
         conn = self._get_connection(name, uri)
         if conn != None:
-            out('{"ok" : 1, "server" : "%s", "name" : "%s"}' % (uri, name))
+            out('{"ok" : 1, "server" : "%s", "name" : "%s"}\n' % (uri, name))
         else:
-            out('{"ok" : 0, "errmsg" : "could not connect", "server" : "%s", "name" : "%s"}' % (uri, name))
+            out('{"ok" : 0, "errmsg" : "could not connect", "server" : "%s", "name" : "%s"}\n' % (uri, name))
 
     def _disconnect(self, args, out, name=None, db=None, collection=None):
         """
         disconnect from the database
         """
+
+        if name == None:
+            name = "default"
+
         conn = self._get_connection(name)
         if conn is None:
-            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}')
+            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}\n')
             return
 
         conn.disconnect()
         del self.connections[name]
 
-        out('{"ok": 1}')
+        out('{"ok": 1}\n')
 
 
     def _authenticate(self, args, out, name = None, db = None, collection = None):
@@ -195,28 +200,28 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_find must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_find must be a POST request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None:
-            out('{"ok" : 0, "errmsg" : "db must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db must be defined"}\n')
             return
 
         if not 'username' in args:
-            out('{"ok" : 0, "errmsg" : "username must be defined"}')
+            out('{"ok" : 0, "errmsg" : "username must be defined"}\n')
 
         if not 'password' in args:
-            out('{"ok" : 0, "errmsg" : "password must be defined"}')
+            out('{"ok" : 0, "errmsg" : "password must be defined"}\n')
         
         if not conn[db].authenticate(args.getvalue('username'), args.getvalue('password')):
-            out('{"ok" : 0, "errmsg" : "authentication failed"}')
+            out('{"ok" : 0, "errmsg" : "authentication failed"}\n')
         else:
-            out('{"ok" : 1}')
+            out('{"ok" : 1}\n')
 
 
     def _count(self, args, out, name=None, db=None, collection=None):
@@ -225,16 +230,16 @@ class MongoHandler:
         """
 
         if type(args).__name__ != 'dict':
-            out('{"ok" : 0, "errmsg" : "_find must be a GET request"}')
+            out('{"ok" : 0, "errmsg" : "_find must be a GET request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return
 
         criteria = {}
@@ -264,16 +269,16 @@ class MongoHandler:
 
     def _aggregate(self, args, out, name = None, db = None, collection = None):
         if type(args).__name__ != 'dict':
-            out('{"ok" : 0, "errmsg" : "_aggregate must be a GET request"}')
+            out('{"ok" : 0, "errmsg" : "_aggregate must be a GET request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return
 
         pipeline = {}
@@ -291,16 +296,16 @@ class MongoHandler:
         """
 
         if type(args).__name__ != 'dict':
-            out('{"ok" : 0, "errmsg" : "_find must be a GET request"}')
+            out('{"ok" : 0, "errmsg" : "_find must be a GET request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return            
 
         criteria = {}
@@ -368,11 +373,11 @@ class MongoHandler:
         """
 
         if type(args).__name__ != 'dict':
-            out('{"ok" : 0, "errmsg" : "_more must be a GET request"}')
+            out('{"ok" : 0, "errmsg" : "_more must be a GET request"}\n')
             return
 
         if 'id' not in args:
-            out('{"ok" : 0, "errmsg" : "no cursor id given"}')
+            out('{"ok" : 0, "errmsg" : "no cursor id given"}\n')
             return
 
 
@@ -380,7 +385,7 @@ class MongoHandler:
         cursors = getattr(self, "cursors")
 
         if id not in cursors:
-            out('{"ok" : 0, "errmsg" : "couldn\'t find the cursor with id %d"}' % id)
+            out('{"ok" : 0, "errmsg" : "couldn\'t find the cursor with id %d"}\n' % id)
             return
 
         cursor = cursors[id]
@@ -402,10 +407,10 @@ class MongoHandler:
             while len(batch) < batch_size:
                 batch.append(cursor.next())
         except AutoReconnect:
-            out(json.dumps({"ok" : 0, "errmsg" : "auto reconnecting, please try again"}))
+            out(json.dumps('{"ok" : 0, "errmsg" : "auto reconnecting, please try again"\n'}))
             return
         except OperationFailure, of:
-            out(json.dumps({"ok" : 0, "errmsg" : "%s" % of}))
+            out(json.dumps('{"ok" : 0, "errmsg" : "%s" % of}\n'))
             return
         except StopIteration:
             # this is so stupid, there's no has_next?
@@ -420,20 +425,20 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_insert must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_insert must be a POST request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return
 
         if "docs" not in args: 
-            out('{"ok" : 0, "errmsg" : "missing docs"}')
+            out('{"ok" : 0, "errmsg" : "missing docs"}\n')
             return
 
         docs = self._get_son(args.getvalue('docs'), out)
@@ -461,7 +466,7 @@ class MongoHandler:
             result = db.last_status()
             out(json.dumps(result, default=json_util.default))
         else:
-            out('{"ok" : 1}')
+            out('{"ok" : 1}\n')
 
 
     def _update(self, args, out, name = None, db = None, collection = None):
@@ -470,27 +475,27 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_update must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_update must be a POST request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return
         
         if "criteria" not in args: 
-            out('{"ok" : 0, "errmsg" : "missing criteria"}')
+            out('{"ok" : 0, "errmsg" : "missing criteria"}\n')
             return
         criteria = self._get_son(args.getvalue('criteria'), out)
         if criteria == None:
             return
 
         if "newobj" not in args:
-            out('{"ok" : 0, "errmsg" : "missing newobj"}')
+            out('{"ok" : 0, "errmsg" : "missing newobj"}\n')
             return
         newobj = self._get_son(args.getvalue('newobj'), out)
         if newobj == None:
@@ -514,16 +519,16 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_remove must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_remove must be a POST request"}\n')
             return
 
         conn = self._get_connection(name)
         if conn == None:
-            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}')
+            out('{"ok" : 0, "errmsg" : "couldn\'t get connection to mongo"}\n')
             return
 
         if db == None or collection == None:
-            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}')
+            out('{"ok" : 0, "errmsg" : "db and collection must be defined"}\n')
             return
         
         criteria = {}
@@ -542,7 +547,7 @@ class MongoHandler:
         """
 
         if type(args).__name__ == 'dict':
-            out('{"ok" : 0, "errmsg" : "_batch must be a POST request"}')
+            out('{"ok" : 0, "errmsg" : "_batch must be a POST request"}\n')
             return
 
         requests = self._get_son(args.getvalue('requests'), out)
@@ -600,18 +605,18 @@ class MongoHandler:
         """
         conn = self._get_connection(name)
         if conn is None:
-            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}')
+            out('{"ok": 0, "err": "couldn\'t get connection to mongo"}\n')
             return
 
         if db is None or collection is None:
-            out('{"ok": 0, "err": "db and collection must be defined"}')
+            out('{"ok": 0, "err": "db and collection must be defined"}\n')
             return
 
         keys = None
         if "keys" in args:
             keys = self._get_son(args.getvalue('keys'), out)
         if keys is None:
-            out('{"ok": 0, "err": "missing keys"}')
+            out('{"ok": 0, "err": "missing keys"}\n')
             return
 
         options = {}
@@ -624,9 +629,9 @@ class MongoHandler:
 
         try:
             name = conn[db][collection].ensure_index(keys.items(), cache_for=cache_for,  **options)
-            out('{"ok": 1, "name": "%s"}' % name)
+            out('{"ok": 1, "name": "%s"}\n' % name)
         except Exception, e:
-            out('{"ok": 0, "err": "%s"}' % (e.message)
+            out('{"ok": 0, "err": "%s"}\n' % e.message)
 
 
 class MongoFakeStream:
